@@ -32,49 +32,48 @@ void setup() {
 }
 
 
-void anemo() {
+float anemo() {
   if ((millis() - lastDebounceTime) > debounceDelay)
   {
     lastDebounceTime = millis();
     float currentSpeed = (Count * 8.75)/100;
-    Serial.print("WS_ANEMO#");
-    Serial.println(currentSpeed);
     Count = 0;
+    return currentSpeed;
   }
+  return 0;
 }
 
 
 void loop() {
   if (stringComplete) {
     Serial.println(inputString);
-    // clear the string:
+    inputString.trim();  
+    if(inputString == "TEST") {
+      Serial.println("secret");
+    } 
+    
+
+
+
     inputString = "";
     stringComplete = false;
   }
 
   delay(1000);
 
-  float h = dht.readHumidity();
   float t = dht.readTemperature();
+  float h = dht.readHumidity();
+  float speed = anemo();
 
-  // Check if any reads failed and exit early (to try again).
-  if (isnan(h) || isnan(t)) {
-    Serial.println(F("Failed to read from DHT sensor!"));
-    return;
-  }
-
-  // Compute heat index in Celsius (isFahreheit = false)
-  float hic = dht.computeHeatIndex(t, h, false);
-
+  
   Serial.print("WS_HUM#");
   Serial.println(h);
 
   Serial.print("WS_TEMP#");
   Serial.println(t);
 
-  anemo();
-
-  
+  Serial.print("WS_ANEMO#");
+  Serial.println(speed);
 }
 
 
