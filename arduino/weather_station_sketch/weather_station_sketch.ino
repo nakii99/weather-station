@@ -11,6 +11,9 @@ unsigned long lastDebounceTime = 0;  // the last time the output pin was toggled
 unsigned long debounceDelay = 1000; 
 int Count = 0;
 
+String inputString = "";      // a String to hold incoming data
+bool stringComplete = false;  // whether the string is complete
+
 void onChange()
 {
   if ( digitalRead(ANEMOPIN) == LOW )
@@ -24,7 +27,7 @@ void setup() {
 
   pinMode(ANEMOPIN, INPUT_PULLUP);
   attachInterrupt( digitalPinToInterrupt(ANEMOPIN), onChange, FALLING);
-
+  inputString.reserve(200);
   Serial.println("WS#INIT");
 }
 
@@ -33,15 +36,23 @@ void anemo() {
   if ((millis() - lastDebounceTime) > debounceDelay)
   {
     lastDebounceTime = millis();
-    Serial.print((Count * 8.75)/100);
+    float currentSpeed = (Count * 8.75)/100;
+    Serial.print("WS_ANEMO#");
+    Serial.println(currentSpeed);
     Count = 0;
-    Serial.println("m/s");
   }
 }
 
 
 void loop() {
-  delay(2000);
+  if (stringComplete) {
+    Serial.println(inputString);
+    // clear the string:
+    inputString = "";
+    stringComplete = false;
+  }
+
+  delay(1000);
 
   float h = dht.readHumidity();
   float t = dht.readTemperature();
@@ -55,14 +66,28 @@ void loop() {
   // Compute heat index in Celsius (isFahreheit = false)
   float hic = dht.computeHeatIndex(t, h, false);
 
-  Serial.print(F("Humidity: "));
-  Serial.print(h);
-  Serial.print(F("%  Temperature: "));
-  Serial.print(t);
-  Serial.print(F("°C"));
-  Serial.print(F(" Heat index: "));
-  Serial.print(hic);
-  Serial.print(F("°C\n"));
+  Serial.print("WS_HUM#");
+  Serial.println(h);
+
+  Serial.print("WS_TEMP#");
+  Serial.println(t);
 
   anemo();
+
+  
+}
+
+
+void serialEvent() {
+  while (Serial.available()) {
+    // get the new byte:
+    char inChar = (char)Serial.read();
+    // add it to the inputString:
+    inputString += inChar;
+    // if the incoming character is a newline, set a flag so the main loop can
+    // do something about it:
+    if (inChar == '\r') {
+      stringComplete = true;
+    }
+  }
 }
