@@ -1,42 +1,17 @@
 #include <DHT.h>
+#include "Anemometer.hpp"
 #define DHTPIN 2
 #define DHTTYPE DHT11 
-
-DHT dht(DHTPIN, DHTTYPE);
-
-
 #define ANEMOPIN 3
 
-unsigned long lastDebounceTime = 0;  // the last time the output pin was toggled
-unsigned long debounceDelay = 1000; 
-int Count = 0;
-
-void onChange()
-{
-  if ( digitalRead(ANEMOPIN) == LOW )
-    Count++;
-}
+DHT dht(DHTPIN, DHTTYPE);
+Anemometer anemo(ANEMOPIN);
 
 void setup() {
-  // put your setup code here, to run once:
   Serial.begin(115200);
   dht.begin();
-
-  pinMode(ANEMOPIN, INPUT_PULLUP);
-  attachInterrupt( digitalPinToInterrupt(ANEMOPIN), onChange, FALLING);
-
+  anemo.begin();
   Serial.println("WS#INIT");
-}
-
-
-void anemo() {
-  if ((millis() - lastDebounceTime) > debounceDelay)
-  {
-    lastDebounceTime = millis();
-    Serial.print((Count * 8.75)/100);
-    Count = 0;
-    Serial.println("m/s");
-  }
 }
 
 
